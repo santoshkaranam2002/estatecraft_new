@@ -1,0 +1,47 @@
+<header class="topheader">
+  <button class="header-menu-btn" (click)="menuToggle.emit()">
+    <ui-icon name="menu" [size]="18"></ui-icon>
+  </button>
+
+  <div class="header-title">
+    {{ title[0] }}
+    @if (title[1]) { <span>{{ title[1] }}</span> }
+  </div>
+
+  <div class="header-actions">
+    @if (userRole === 'customer') {
+      <a class="icon-btn" routerLink="/app/favorites" title="Favourites">
+        <ui-icon name="heart" [size]="16"></ui-icon>
+      </a>
+    }
+    @if (userRole === 'admin') {
+      <a class="btn btn-primary btn-sm" routerLink="/app/admin" [queryParams]="{ add: 1 }">
+        <ui-icon name="plus" [size]="14"></ui-icon> Add Property
+      </a>
+    }
+
+    @if (userRole) {
+      <div class="role-pill" (click)="toggleRoleMenu()">
+        <span class="avatar">{{ initials() }}</span>
+        <span style="font-weight:700; text-transform:capitalize;">{{ userRole }}</span>
+        <ui-icon name="chevronDown" [size]="14"></ui-icon>
+
+        @if (roleMenuOpen()) {
+          <div class="role-dropdown">
+            <div class="rd-user">
+              <b>{{ userName }}</b>
+              <span>{{ userEmail }}</span>
+            </div>
+            <button (click)="logout()">
+              <ui-icon name="logout" [size]="15"></ui-icon> Log out
+            </button>
+          </div>
+        }
+      </div>
+    } @else {
+      <a class="btn btn-primary btn-sm" routerLink="/login" [queryParams]="{ intent: 'customer' }">
+        <ui-icon name="users" [size]="14"></ui-icon> Sign In
+      </a>
+    }
+  </div>
+</header>

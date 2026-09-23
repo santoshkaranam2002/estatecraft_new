@@ -1,0 +1,50 @@
+<aside class="sidebar" [class.open]="mobileOpen">
+  <div class="sidebar-logo">
+    <span class="brand-mark"><ui-icon name="compass" [size]="17" [stroke]="1.8"></ui-icon></span>
+    Estatecraft
+    <button class="sidebar-close" (click)="closeMobile.emit()"><ui-icon name="x" [size]="16"></ui-icon></button>
+  </div>
+
+  @if (userRole) {
+    <div class="sidebar-user">
+      <span class="avatar">{{ initials() }}</span>
+      <div class="who">
+        <b>{{ userName }}</b>
+        <span>{{ userRole }}</span>
+      </div>
+    </div>
+  } @else {
+    <div class="sidebar-cta">
+      <p>Browsing as a guest — sign in with just your phone to enquire or save favourites.</p>
+      <a class="btn btn-primary btn-sm btn-block" routerLink="/login" [queryParams]="{ intent: 'customer' }" (click)="closeMobile.emit()">
+        <ui-icon name="users" [size]="13"></ui-icon> Sign In
+      </a>
+    </div>
+  }
+
+  <div class="sidebar-section">Navigate</div>
+  <nav class="sidebar-nav">
+    @for (link of links; track link.path) {
+      <a class="sidebar-link" [routerLink]="link.path" routerLinkActive="active" (click)="closeMobile.emit()">
+        <ui-icon [name]="link.icon" [size]="16"></ui-icon> {{ link.label }}
+      </a>
+    }
+  </nav>
+
+  @if (userRole === 'admin') {
+    <div class="sidebar-cta">
+      <p>Got a new property to list?</p>
+      <a class="btn btn-primary btn-sm btn-block" routerLink="/app/admin" [queryParams]="{ add: 1 }">
+        <ui-icon name="plus" [size]="13"></ui-icon> Add Property
+      </a>
+    </div>
+  }
+
+  @if (userRole) {
+    <div class="sidebar-footer">
+      <button class="foot-link" (click)="logout()">
+        <ui-icon name="logout" [size]="15"></ui-icon> Log out
+      </button>
+    </div>
+  }
+</aside>

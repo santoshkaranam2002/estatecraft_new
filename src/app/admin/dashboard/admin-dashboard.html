@@ -1,0 +1,264 @@
+<div class="page container">
+  <div class="section-head">
+    <div><div class="eyebrow">Admin</div><h2 style="margin-top:8px;">Platform overview</h2></div>
+    <button class="btn btn-primary" (click)="openAdd()"><ui-icon name="plus" [size]="15"></ui-icon> Add New Property</button>
+  </div>
+
+  @if (loading()) {
+    <div class="empty-state">
+      <div class="ico-wrap"><ui-icon name="shield" [size]="26"></ui-icon></div>
+      <p>Loading platform data…</p>
+    </div>
+  } @else if (loadError()) {
+    <div class="empty-state">
+      <div class="ico-wrap"><ui-icon name="x" [size]="26"></ui-icon></div>
+      <p>Couldn't load platform data — is the backend server running?</p>
+      <button class="btn btn-outline btn-sm" style="margin-top:14px;" (click)="getAllProperties(); getAllEnquiries();">Retry</button>
+    </div>
+  } @else {
+
+  <div class="stat-grid">
+    <div class="stat-card"><div class="eyebrow">Total Properties</div><b>{{ properties().length }}</b><span class="delta"><ui-icon name="building" [size]="12"></ui-icon> houses &amp; apartments</span></div>
+    <div class="stat-card"><div class="eyebrow">Independent Houses</div><b>{{ houseCount() }}</b><span class="delta"><ui-icon name="home" [size]="12"></ui-icon> standalone homes</span></div>
+    <div class="stat-card"><div class="eyebrow">Apartments</div><b>{{ apartmentCount() }}</b><span class="delta"><ui-icon name="layers" [size]="12"></ui-icon> apartments &amp; condos</span></div>
+    <div class="stat-card"><div class="eyebrow">Available Now</div><b>{{ availableCount() }}</b><span class="delta"><ui-icon name="key" [size]="12"></ui-icon> ready to rent</span></div>
+  </div>
+
+  <div class="tabs-row">
+    <button class="tab-btn" [class.active]="activeTab() === 'properties'" (click)="activeTab.set('properties')">
+      All Properties @if (pending().length) { ({{ pending().length }} pending) }
+    </button>
+    <button class="tab-btn" [class.active]="activeTab() === 'overview'" (click)="activeTab.set('overview')">Category Overview</button>
+    <button class="tab-btn" [class.active]="activeTab() === 'enquiries'" (click)="activeTab.set('enquiries')">All Enquiries</button>
+    <button class="tab-btn" [class.active]="activeTab() === 'customers'" (click)="activeTab.set('customers')">Customers</button>
+  </div>
+
+  <div class="dash-grid">
+    <div>
+      @if (activeTab() === 'properties') {
+        <div class="panel table-scroll">
+          <h3>All properties</h3>
+          <table class="table">
+            <thead><tr><th></th><th>Property</th><th>Category</th><th>Rent</th><th>Status</th><th>Featured</th><th></th></tr></thead>
+            <tbody>
+              @for (p of properties(); track p.id) {
+                <tr>
+                  <td><img class="mini-thumb" [src]="(p.images && p.images[0]) || imageUrl(p.seed)" alt=""></td>
+                  <td><b>{{ p.title }}</b><br><span style="font-size:11.5px; color:var(--ink-faint);">{{ p.location }}, {{ p.city }}</span></td>
+                  <td>{{ p.category }}</td>
+                  <td class="mono">{{ formatPrice(p.price) }}{{ p.priceUnit }}</td>
+                  <td>
+                    @if (!p.approved) {
+                      <span class="status-badge status-Pending">Pending Approval</span>
+                    } @else {
+                      <span class="status-badge" [class.status-Available]="p.status === 'Available'" [class.status-Rented]="p.status !== 'Available'">{{ p.status }}</span>
+                    }
+                  </td>
+                  <td>
+                    <button class="icon-btn" [class.active]="p.featured" [disabled]="!p.approved" [title]="!p.approved ? 'Approve this listing first' : (p.featured ? 'Remove from featured' : 'Mark as featured')" (click)="toggleFeatured(p)">
+                      <ui-icon name="star" [size]="14"></ui-icon>
+                    </button>
+                  </td>
+                  <td>
+                    <div style="display:flex; gap:6px;">
+                      @if (!p.approved) {
+                        <button class="icon-btn" title="Approve" (click)="approve(p.id)"><ui-icon name="check" [size]="14"></ui-icon></button>
+                      }
+                      <button class="icon-btn" title="Remove property" (click)="deletePropertyAsAdmin(p)"><ui-icon name="trash" [size]="14"></ui-icon></button>
+                    </div>
+                  </td>
+                </tr>
+              } @empty {
+                <tr><td colspan="7" style="text-align:center; color:var(--ink-faint); padding:30px 0;">No properties yet — add your first one above.</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      @if (activeTab() === 'overview') {
+        <div class="panel">
+          <h3>Properties by category</h3>
+          @for (c of categoryBreakdown(); track c.label) {
+            <div class="bar-row">
+              <span>{{ c.label }}</span>
+              <div class="bar-track"><div class="bar-fill" [style.width.%]="(c.count / maxCategoryCount()) * 100"></div></div>
+              <span class="mono" style="text-align:right;">{{ c.count }}</span>
+            </div>
+          }
+        </div>
+      }
+
+      @if (activeTab() === 'enquiries') {
+        <div class="panel table-scroll">
+          <h3>All enquiries</h3>
+          <table class="table">
+            <thead><tr><th>Customer</th><th>Property</th><th>Date</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+              @for (e of enquiries(); track e.id) {
+                <tr>
+                  <td>{{ e.name }}<br><span style="font-size:11.5px;color:var(--ink-faint);">{{ e.phone }}</span></td>
+                  <td>{{ e.propertyTitle }}</td>
+                  <td class="mono">{{ e.date }}</td>
+                  <td><span [class]="'status-badge status-' + slug(e.status)">{{ e.status }}</span></td>
+                  <td>
+                    @if (nextStatuses(e.status).length) {
+                      <select class="txt" style="width:auto; padding:8px 10px; font-size:12.5px;" (change)="updateEnquiryStatus(e, $any($event.target).value); $any($event.target).value=''">
+                        <option value="" disabled selected>Update status…</option>
+                        @for (s of nextStatuses(e.status); track s) { <option [value]="s">Mark as {{ s }}</option> }
+                      </select>
+                    }
+                  </td>
+                </tr>
+              } @empty {
+                <tr><td colspan="5" style="text-align:center; color:var(--ink-faint); padding:30px 0;">No enquiries recorded yet.</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      @if (activeTab() === 'customers') {
+        <div class="panel table-scroll">
+          <h3>All customers</h3>
+          @if (customersLoading()) {
+            <div class="empty-state">
+              <p>Loading customers…</p>
+            </div>
+          } @else {
+            <table class="table">
+              <thead><tr><th>Customer</th><th>Phone</th><th>Email</th><th>Joined</th><th></th></tr></thead>
+              <tbody>
+                @for (c of customers(); track c.id) {
+                  <tr>
+                    <td><b>{{ c.name }}</b></td>
+                    <td style="font-size:12.5px; color:var(--ink-faint);">{{ c.phone }}</td>
+                    <td style="font-size:12.5px; color:var(--ink-faint);">{{ c.email }}</td>
+                    <td class="mono">{{ c.createdDate }}</td>
+                    <td>
+                      <button class="icon-btn" title="Remove customer" (click)="deleteCustomer(c)"><ui-icon name="trash" [size]="14"></ui-icon></button>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="5" style="text-align:center; color:var(--ink-faint); padding:30px 0;">No customers have signed up yet.</td></tr>
+                }
+              </tbody>
+            </table>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="panel">
+      <h3>Recent listings</h3>
+      @for (p of recentListings(); track p.id) {
+        <div class="approval-item">
+          <img [src]="(p.images && p.images[0]) || imageUrl(p.seed)" alt="">
+          <div class="meta"><h4 style="font-size:13.5px;">{{ p.title }}</h4><span>{{ p.city }} · {{ formatPrice(p.price) }}{{ p.priceUnit }}</span></div>
+        </div>
+      }
+    </div>
+  </div>
+
+  }
+</div>
+
+@if (showAddModal()) {
+  <div class="modal-overlay" (click)="closeAdd()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <button class="modal-close" (click)="closeAdd()"><ui-icon name="x" [size]="15"></ui-icon></button>
+      <div class="eyebrow">New Listing</div>
+      <h2 style="margin-top:8px; font-size:22px;">Add a rental property</h2>
+      <p style="color:var(--ink-faint); font-size:13px; margin-top:4px;">This goes straight to customers — no separate approval step needed.</p>
+
+      <div class="form-grid">
+        <div class="field full">
+          <label>Property Photos</label>
+          <input class="txt" type="file" accept="image/*" multiple (change)="onImagesSelected($event)">
+          <span style="font-size:12px; color:var(--ink-faint); margin-top:4px; display:block;">Upload as many as you like — rooms, exterior, everything. A generated placeholder is used if you skip this.</span>
+          @if (imagePreviewUrls().length) {
+            <div class="image-preview-grid">
+              @for (url of imagePreviewUrls(); track $index) {
+                <div class="image-preview-item">
+                  <img [src]="url" alt="Preview">
+                  <button type="button" class="image-preview-remove" (click)="removeSelectedImage($index)" title="Remove"><ui-icon name="x" [size]="12"></ui-icon></button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+        <div class="field full">
+          <label>Property Title</label>
+          <input class="txt" placeholder="e.g. Lakeview 3BHK Independent House" [(ngModel)]="form().title" name="title">
+        </div>
+        <div class="field">
+          <label>Category</label>
+          <select class="txt" [(ngModel)]="form().category" name="category">
+            @for (c of categories; track c.value) { <option [value]="c.value">{{ c.label }}</option> }
+          </select>
+        </div>
+        <div class="field">
+          <label>Monthly Rent (₹)</label>
+          <input class="txt" type="number" placeholder="e.g. 18000" [(ngModel)]="form().price" name="price">
+        </div>
+        <div class="field">
+          <label>City</label>
+          <input class="txt" placeholder="e.g. Visakhapatnam" [(ngModel)]="form().city" name="city">
+        </div>
+        <div class="field">
+          <label>Area / Locality</label>
+          <input class="txt" placeholder="e.g. MVP Colony" [(ngModel)]="form().location" name="location">
+        </div>
+        <div class="field full">
+          <label>GPS Location <span style="text-transform:none; font-weight:500; color:var(--ink-faint);">(optional, for exact map pin)</span></label>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <input class="txt" type="number" step="any" placeholder="Latitude, e.g. 17.7231" [(ngModel)]="form().latitude" name="latitude">
+            <input class="txt" type="number" step="any" placeholder="Longitude, e.g. 83.3013" [(ngModel)]="form().longitude" name="longitude">
+          </div>
+          <span style="font-size:12px; color:var(--ink-faint); margin-top:6px; display:block;">
+            To find these: open <a href="https://www.google.com/maps" target="_blank" style="color:var(--sunset); font-weight:600;">Google Maps</a>, right-click the exact spot, and click the coordinates shown at the top of the menu to copy them — then paste the two numbers here. If you skip this, the property still works, but "View on Google Maps" will search by area/city instead of pointing at the exact building.
+          </span>
+        </div>
+        <div class="field">
+          <label>Bedrooms</label>
+          <input class="txt" type="number" [(ngModel)]="form().beds" name="beds">
+        </div>
+        <div class="field">
+          <label>Bathrooms</label>
+          <input class="txt" type="number" [(ngModel)]="form().baths" name="baths">
+        </div>
+        <div class="field">
+          <label>Area (sqft)</label>
+          <input class="txt" type="number" [(ngModel)]="form().area" name="area">
+        </div>
+        <div class="field">
+          <label>Floor</label>
+          <input class="txt" placeholder="e.g. 3 of 8" [(ngModel)]="form().floor" name="floor">
+        </div>
+        <div class="field full">
+          <label>Furnishing</label>
+          <select class="txt" [(ngModel)]="form().furnishing" name="furnishing">
+            @for (f of furnishings; track f) { <option [value]="f">{{ f }}</option> }
+          </select>
+        </div>
+        <div class="field full">
+          <label>Amenities</label>
+          <div class="amenity-check-grid">
+            @for (a of amenityList; track a) {
+              <label class="chip" [class.active]="form().amenities.includes(a)" style="cursor:pointer; display:flex; align-items:center; justify-content:center; text-align:center;">
+                <input type="checkbox" [checked]="form().amenities.includes(a)" (change)="toggleAmenity(a)" style="display:none;">
+                {{ a }}
+              </label>
+            }
+          </div>
+        </div>
+        <div class="field full">
+          <label>Description</label>
+          <textarea class="txt" rows="3" placeholder="A short description of the property…" [(ngModel)]="form().description" name="description"></textarea>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-block" style="margin-top:20px;" (click)="submitProperty()">Publish Property</button>
+    </div>
+  </div>
+}

@@ -1,0 +1,23 @@
+<div class="modal-overlay" (click)="closed.emit()">
+  <div class="modal" style="max-width:460px;" (click)="$event.stopPropagation()">
+    <button class="modal-close" (click)="closed.emit()"><ui-icon name="x" [size]="15"></ui-icon></button>
+    <div class="eyebrow">Send Enquiry</div>
+    <h2 style="margin-top:8px; font-size:22px;">{{ property.title }}</h2>
+    <p style="color:var(--ink-faint); font-size:13px; margin-top:4px;">Our team will reach out to you directly.</p>
+
+    <div class="field" style="margin-top:20px;">
+      <label>Your name</label>
+      <input class="txt" type="text" placeholder="Full name" [(ngModel)]="name" name="name">
+    </div>
+    <div class="field" style="margin-top:14px;">
+      <label>Phone number</label>
+      <input class="txt" type="text" placeholder="+91" [(ngModel)]="phone" name="phone">
+    </div>
+    <div class="field" style="margin-top:14px;">
+      <label>Message</label>
+      <textarea class="txt" [(ngModel)]="message" name="message"></textarea>
+    </div>
+
+    <button class="btn btn-primary btn-block" style="margin-top:18px;" (click)="submit()">Send Enquiry</button>
+  </div>
+</div>

@@ -1,0 +1,12 @@
+<div class="app-shell">
+  <app-sidebar [mobileOpen]="mobileNavOpen()" (closeMobile)="closeMobileNav()"></app-sidebar>
+  @if (mobileNavOpen()) {
+    <div class="mobile-scrim" (click)="closeMobileNav()"></div>
+  }
+  <div class="main-col">
+    <app-header (menuToggle)="toggleMobileNav()"></app-header>
+    <div class="content-scroll">
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+</div>

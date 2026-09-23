@@ -1,0 +1,30 @@
+<div class="page container">
+  <div class="eyebrow">Saved</div>
+  <h2 style="margin-top:8px; margin-bottom:22px;">Your favourite properties</h2>
+
+  @if (loading()) {
+    <div class="empty-state">
+      <div class="ico-wrap"><ui-icon name="heart" [size]="28"></ui-icon></div>
+      <p>Loading your favourites…</p>
+    </div>
+  } @else if (loadError()) {
+    <div class="empty-state">
+      <div class="ico-wrap"><ui-icon name="x" [size]="28"></ui-icon></div>
+      <p>Couldn't load favourites — is the backend server running?</p>
+      <button class="btn btn-outline btn-sm" style="margin-top:14px;" (click)="getFavoriteProperties()">Retry</button>
+    </div>
+  } @else if (favoriteProperties().length) {
+    <div class="grid-3">
+      @for (p of favoriteProperties(); track p.id) {
+        <app-property-card [property]="p"></app-property-card>
+      }
+    </div>
+  } @else {
+    <div class="empty-state">
+      <div class="ico-wrap"><ui-icon name="heart" [size]="28"></ui-icon></div>
+      <h3 style="margin-top:4px;">Nothing saved yet</h3>
+      <p style="margin-top:6px;">Tap the heart on any listing to keep track of it here.</p>
+      <a class="btn btn-primary" style="margin-top:20px; display:inline-flex;" routerLink="/app/listings">Browse Properties</a>
+    </div>
+  }
+</div>

@@ -1,0 +1,49 @@
+@if (!compact) {
+  <div class="pcard">
+    <a class="pcard-media" [routerLink]="['/app/property', property.id]">
+      <img [src]="img()" [alt]="property.title">
+      <div class="pcard-tags">
+        <span class="tag tag-rent">{{ property.category === 'Apartment' ? 'Apartment' : 'Individual House' }}</span>
+        @if (property.featured) { <span class="tag tag-featured">Featured</span> }
+        @if (!property.approved) { <span class="tag tag-status">Pending Approval</span> }
+      </div>
+      <button class="fav-btn" [class.active]="isFav()" (click)="toggleFav($event)">
+        <ui-icon name="heart" [size]="15"></ui-icon>
+      </button>
+    </a>
+    <div class="pcard-body">
+      <div class="pcard-price">{{ price() }}<small> {{ property.priceUnit }}</small></div>
+      <h3>{{ property.title }}</h3>
+      <div class="loc"><ui-icon name="pin" [size]="13"></ui-icon> {{ property.location }}</div>
+      <div class="spec-strip">
+        @if (property.beds) {
+          <div class="spec-item"><ui-icon name="bed" [size]="13"></ui-icon><b>{{ property.beds }}</b> Bed</div>
+        } @else {
+          <div class="spec-item"><ui-icon name="land" [size]="13"></ui-icon><b>{{ property.category }}</b></div>
+        }
+        @if (property.baths) {
+          <div class="spec-item"><ui-icon name="bath" [size]="13"></ui-icon><b>{{ property.baths }}</b> Bath</div>
+        }
+        <div class="spec-item"><ui-icon name="ruler" [size]="13"></ui-icon><b>{{ property.area | number }}</b> sft</div>
+      </div>
+      <div class="pcard-cta">
+        <a class="btn btn-outline btn-sm" [routerLink]="['/app/property', property.id]">View Details</a>
+        <button class="btn btn-primary btn-sm" (click)="onEnquire($event)">Enquire</button>
+      </div>
+    </div>
+  </div>
+} @else {
+  <a class="pcard pcard--compact" [routerLink]="['/app/property', property.id]">
+    <div class="pcard-media">
+      <img [src]="img(500, 400)" [alt]="property.title">
+      <div class="pcard-tags">
+        <span class="tag tag-rent">{{ property.category }}</span>
+      </div>
+    </div>
+    <div class="pcard-body pcard-body--compact">
+      <div class="pcard-price" style="font-size:16px;">{{ price() }}<small> {{ property.priceUnit }}</small></div>
+      <h3 style="font-size:13.5px;">{{ property.title }}</h3>
+      <div class="loc" style="font-size:11.5px;"><ui-icon name="pin" [size]="12"></ui-icon> {{ property.city }}</div>
+    </div>
+  </a>
+}

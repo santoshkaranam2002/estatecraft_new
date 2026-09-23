@@ -1,0 +1,82 @@
+<div class="auth-screen mirrored">
+  <div class="auth-blob b1"></div>
+  <div class="auth-blob b2"></div>
+  <div class="auth-blob b3"></div>
+  <div class="auth-grid-overlay"></div>
+
+  <div class="auth-content">
+    <div class="auth-card-wrap">
+      <div class="auth-card">
+        <div class="auth-logo auth-logo--mobile">
+          <span class="auth-logo-mark"><ui-icon name="compass" [size]="18" [stroke]="1.8"></ui-icon></span>
+          Estatecraft
+        </div>
+
+        <div class="auth-card-head">
+          <h2>Create an admin account</h2>
+          <p>Fill in your details and you're in.</p>
+        </div>
+
+        <div class="auth-notice">
+          <ui-icon name="users" [size]="15"></ui-icon>
+          <span>Looking to browse or contact an owner as a <b>customer</b>? No account needed to browse — and when you're ready to enquire, <a routerLink="/login">sign in with just your phone number</a>.</span>
+        </div>
+
+        <form (ngSubmit)="onSubmit()" novalidate>
+          <div class="form-grid" style="margin-top:0;">
+            <div class="field full">
+              <label for="name">Full name</label>
+              <input class="txt" [class.invalid]="nameError()" id="name" type="text" placeholder="Your full name" [(ngModel)]="name" name="name" (ngModelChange)="clearError()">
+            </div>
+            <div class="field">
+              <label for="su-email">Email address</label>
+              <input class="txt" [class.invalid]="emailError()" id="su-email" type="email" placeholder="you@example.com" [(ngModel)]="email" name="email" (ngModelChange)="clearError()">
+            </div>
+            <div class="field">
+              <label for="su-phone">Phone number</label>
+              <input class="txt" [class.invalid]="phoneError()" id="su-phone" type="tel" placeholder="+91 90000 00000" [(ngModel)]="phone" name="phone" (ngModelChange)="clearError()">
+            </div>
+            <div class="field">
+              <label for="su-password">Password</label>
+              <div class="input-icon-wrap">
+                <span class="ico"><ui-icon name="lock" [size]="16"></ui-icon></span>
+                <input class="txt" [class.invalid]="passwordError()" id="su-password" [type]="showPassword ? 'text' : 'password'" placeholder="Min. 6 characters" [(ngModel)]="password" name="password" (ngModelChange)="clearError()">
+                <button type="button" class="toggle-visibility" (click)="togglePassword()">
+                  <ui-icon [name]="showPassword ? 'eyeOff' : 'eye'" [size]="16"></ui-icon>
+                </button>
+              </div>
+            </div>
+            <div class="field">
+              <label for="su-confirm">Confirm password</label>
+              <input class="txt" [class.invalid]="passwordError()" id="su-confirm" [type]="showPassword ? 'text' : 'password'" placeholder="Re-enter password" [(ngModel)]="confirmPassword" name="confirmPassword" (ngModelChange)="clearError()">
+            </div>
+          </div>
+
+          @if (errorMessage()) {
+            <div class="auth-error" style="margin-top:16px;"><ui-icon name="x" [size]="14"></ui-icon> {{ errorMessage() }}</div>
+          }
+
+          <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-top:20px;" [disabled]="isLoading()">
+            {{ isLoading() ? 'Creating account…' : 'Create account' }}
+          </button>
+        </form>
+
+        <p class="auth-switch">Already have an account? <a routerLink="/login">Sign in</a></p>
+      </div>
+    </div>
+
+    <div class="auth-brandpanel">
+      <div class="auth-logo">
+        <span class="auth-logo-mark"><ui-icon name="compass" [size]="20" [stroke]="1.8"></ui-icon></span>
+        Estatecraft
+      </div>
+      <h1>Manage the platform<br><em>from one dashboard.</em></h1>
+      <p class="auth-lead">Admin accounts get full control — approve listings, feature properties, and track every enquiry.</p>
+      <ul class="auth-feature-list">
+        <li><ui-icon name="check" [size]="15"></ui-icon> Set up in under a minute</li>
+        <li><ui-icon name="check" [size]="15"></ui-icon> Full platform oversight</li>
+        <li><ui-icon name="check" [size]="15"></ui-icon> Customers never need an account to browse</li>
+      </ul>
+    </div>
+  </div>
+</div>

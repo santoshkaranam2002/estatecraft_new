@@ -1,0 +1,18 @@
+# Dependencies
+/node_modules
+
+# Angular build cache & output
+/.angular
+/dist
+/out-tsc
+
+# Editor
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env

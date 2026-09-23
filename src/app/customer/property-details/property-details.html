@@ -1,0 +1,161 @@
+@if (loading()) {
+  <div class="page container">
+    <div class="empty-state">
+      <p>Loading property details…</p>
+    </div>
+  </div>
+} @else if (loadError()) {
+  <div class="page container">
+    <div class="empty-state">
+      <p>Couldn't load this property — is the backend server running?</p>
+      <button class="btn btn-outline btn-sm" style="margin-top:14px;" (click)="getPropertyDetails()">Retry</button>
+    </div>
+  </div>
+} @else if (property(); as p) {
+  <div class="page container">
+    <a routerLink="/app/listings" style="font-size:13px; color:var(--ink-soft); display:inline-flex; align-items:center; gap:6px;">
+      ← Back to results
+    </a>
+
+    <div class="gallery-carousel" style="margin-top:18px;">
+      <div class="gallery-main">
+        <img [src]="currentImage()" alt="">
+        @if (galleryImages().length > 1) {
+          <button class="gallery-nav gallery-nav--prev" (click)="prevImage()" aria-label="Previous photo">
+            <ui-icon name="chevronLeft" [size]="20"></ui-icon>
+          </button>
+          <button class="gallery-nav gallery-nav--next" (click)="nextImage()" aria-label="Next photo">
+            <ui-icon name="chevronRight" [size]="20"></ui-icon>
+          </button>
+          <div class="gallery-counter">{{ currentImageIndex() + 1 }} / {{ galleryImages().length }}</div>
+        }
+      </div>
+      @if (galleryImages().length > 1) {
+        <div class="gallery-thumbs">
+          @for (img of galleryImages(); track $index) {
+            <button class="gallery-thumb" [class.active]="$index === currentImageIndex()" (click)="goToImage($index)">
+              <img [src]="img" alt="">
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="det-header">
+      <div>
+        <div class="pcard-tags" style="position:static; margin-bottom:10px;">
+          <span class="tag tag-rent">For Rent</span>
+          <span class="tag tag-status">{{ p.status }}</span>
+        </div>
+        <h1>{{ p.title }}</h1>
+        <div class="loc" style="margin-top:8px; font-size:14px;"><ui-icon name="pin" [size]="15"></ui-icon> {{ p.location }}</div>
+      </div>
+      <div class="det-price">
+        <div class="amt">{{ formatPrice(p.price) }}</div>
+        <div class="per">{{ p.priceUnit || 'Total Price' }}</div>
+        <div style="display:flex; gap:8px; margin-top:14px; justify-content:flex-end;">
+          <button class="icon-btn" [class.active]="isFav()" (click)="toggleFav()"><ui-icon name="heart" [size]="16"></ui-icon></button>
+          <button class="btn btn-primary btn-sm" (click)="openEnquiry()">Send Enquiry</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="spec-strip-lg" style="margin-top:10px;">
+      <div class="spec-cell"><span>Bedrooms</span><b>{{ p.beds || '—' }}</b></div>
+      <div class="spec-cell"><span>Bathrooms</span><b>{{ p.baths || '—' }}</b></div>
+      <div class="spec-cell"><span>Area</span><b>{{ p.area | number }} sft</b></div>
+      <div class="spec-cell"><span>Floor</span><b>{{ p.floor }}</b></div>
+    </div>
+
+    <div class="det-layout">
+      <div>
+        <div class="det-block">
+          <h3>Overview</h3>
+          <p style="color:var(--ink-soft); font-size:14.5px; line-height:1.7;">{{ p.description }}</p>
+        </div>
+        <div class="det-block">
+          <h3>Specifications</h3>
+          <div class="amenity-grid">
+            <div class="amenity-item"><ui-icon name="layers" [size]="15"></ui-icon> Category — {{ p.category }}</div>
+            <div class="amenity-item"><ui-icon name="sofa" [size]="15"></ui-icon> Furnishing — {{ p.furnishing }}</div>
+            <div class="amenity-item"><ui-icon name="building" [size]="15"></ui-icon> Floor — {{ p.floor }}</div>
+            <div class="amenity-item"><ui-icon name="shield" [size]="15"></ui-icon> Status — {{ p.status }}</div>
+          </div>
+        </div>
+        <div class="det-block">
+          <h3>Amenities</h3>
+          @if (p.amenities.length) {
+            <div class="amenity-grid">
+              @for (a of p.amenities; track a) {
+                <div class="amenity-item"><ui-icon name="check" [size]="15"></ui-icon> {{ a }}</div>
+              }
+            </div>
+          } @else {
+            <span style="color:var(--ink-faint); font-size:13.5px;">No amenities listed for this property.</span>
+          }
+        </div>
+        <div class="det-block">
+          <h3>Location</h3>
+          <a class="map-block" [href]="mapsUrl()" target="_blank" rel="noopener" style="text-decoration:none; display:block; cursor:pointer;">
+            <div class="map-pin"><ui-icon name="pin" [size]="15"></ui-icon></div>
+          </a>
+          <p style="margin-top:12px; font-size:13px; color:var(--ink-faint);">{{ p.location }}, {{ p.city }}</p>
+          <a class="btn btn-outline btn-sm btn-block" [href]="mapsUrl()" target="_blank" rel="noopener" style="margin-top:10px;">
+            <ui-icon name="arrowUpRight" [size]="14"></ui-icon> View on Google Maps
+          </a>
+        </div>
+      </div>
+
+      <div>
+        <div class="det-block">
+          <h3>Listed by</h3>
+          <div class="agent-card">
+            <div class="det-avatar">{{ agentInitials() }}</div>
+            <div>
+              <h4 style="font-size:15px;">{{ agent()?.name }}</h4>
+              <span style="font-size:12.5px; color:var(--ink-faint);">Property Manager</span>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:10px; margin-top:18px;">
+            <a [href]="'tel:' + agent()?.phone" style="font-size:13px; display:flex; align-items:center; gap:8px; color:var(--ink-soft);">
+              <ui-icon name="phone" [size]="15"></ui-icon> {{ agent()?.phone }}
+            </a>
+            <a [href]="'mailto:' + agent()?.email" style="font-size:13px; display:flex; align-items:center; gap:8px; color:var(--ink-soft);">
+              <ui-icon name="mail" [size]="15"></ui-icon> {{ agent()?.email }}
+            </a>
+          </div>
+          <button class="btn btn-primary btn-block" style="margin-top:18px;" (click)="openEnquiry()">Send Enquiry</button>
+        </div>
+
+        <div class="det-block why-block">
+          <h3>Why this property</h3>
+          <div class="why-row"><ui-icon name="check" [size]="15"></ui-icon> <span>Verified listing, reviewed by the Estatecraft team</span></div>
+          <div class="why-row"><ui-icon name="check" [size]="15"></ui-icon> <span>Direct contact with our team — no hidden brokerage</span></div>
+          <div class="why-row"><ui-icon name="check" [size]="15"></ui-icon> <span>Similar properties tracked automatically to your favourites</span></div>
+        </div>
+      </div>
+    </div>
+
+    @if (similar().length) {
+      <div class="section-head" style="margin-top:50px;">
+        <div><div class="eyebrow">You may also like</div><h2 style="margin-top:8px;">Similar {{ p.category | lowercase }} listings</h2></div>
+      </div>
+      <div class="grid-3">
+        @for (s of similar(); track s.id) {
+          <app-property-card [property]="s"></app-property-card>
+        }
+      </div>
+    }
+  </div>
+
+  @if (showEnquiry()) {
+    <app-enquiry-modal [property]="p" (closed)="showEnquiry.set(false)"></app-enquiry-modal>
+  }
+} @else {
+  <div class="page container">
+    <div class="empty-state">
+      <p>Property not found.</p>
+      <a class="btn btn-primary" style="margin-top:16px;" routerLink="/app/listings">Back to listings</a>
+    </div>
+  </div>
+}

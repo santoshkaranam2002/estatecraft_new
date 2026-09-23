@@ -1,0 +1,35 @@
+<div class="page container">
+  <div class="eyebrow">Activity</div>
+  <h2 style="margin-top:8px; margin-bottom:22px;">Properties you've enquired about</h2>
+
+  <div class="panel">
+    @if (loading()) {
+      <div class="empty-state">
+        <div class="ico-wrap"><ui-icon name="mail" [size]="26"></ui-icon></div>
+        <p>Loading your enquiries…</p>
+      </div>
+    } @else if (loadError()) {
+      <div class="empty-state">
+        <div class="ico-wrap"><ui-icon name="x" [size]="26"></ui-icon></div>
+        <p>Couldn't load enquiries — is the backend server running?</p>
+        <button class="btn btn-outline btn-sm" style="margin-top:14px;" (click)="getMyEnquiries()">Retry</button>
+      </div>
+    } @else if (enquiries().length) {
+      @for (e of enquiries(); track e.id) {
+        <div class="enq-item">
+          <img [src]="propertyImg(e.propertySeed)" alt="">
+          <div style="flex:1;">
+            <h4 style="font-size:14.5px;">{{ e.propertyTitle }}</h4>
+            <span style="font-size:12px; color:var(--ink-faint);">Sent {{ e.date }} · "{{ e.message }}"</span>
+          </div>
+          <span [class]="'status-badge status-' + slug(e.status)">{{ e.status }}</span>
+        </div>
+      }
+    } @else {
+      <div class="empty-state">
+        <div class="ico-wrap"><ui-icon name="mail" [size]="26"></ui-icon></div>
+        <p>You haven't sent any enquiries yet.</p>
+      </div>
+    }
+  </div>
+</div>

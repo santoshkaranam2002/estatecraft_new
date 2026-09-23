@@ -1,0 +1,160 @@
+<div class="login-photo-screen">
+  <div class="login-photo-bg"></div>
+  <div class="login-photo-overlay"></div>
+
+  <div class="login-photo-tagline">
+    <div class="login-photo-logo">
+      <span class="auth-logo-mark"><ui-icon name="compass" [size]="18" [stroke]="1.8"></ui-icon></span>
+      Estatecraft
+    </div>
+    <h1>Find a home<br>you'll love to <em>live</em> in.</h1>
+  </div>
+
+  <div class="login-photo-card">
+    <div class="auth-card-head">
+      <h2>Welcome back</h2>
+      <p>Sign in to continue to your dashboard.</p>
+    </div>
+
+    <div class="field">
+      <label>I am signing in as</label>
+      <div class="role-toggle" [class.invalid-group]="roleError()">
+        @for (r of roles; track r.value) {
+          <button type="button" class="role-toggle-btn" [class.active]="role === r.value" (click)="selectRole(r.value)">
+            <ui-icon [name]="r.icon" [size]="15"></ui-icon> {{ r.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    @if (role === 'admin') {
+      <form (ngSubmit)="onSubmit()" novalidate>
+        <div class="field">
+          <label for="email">Email address</label>
+          <div class="input-icon-wrap">
+            <span class="ico"><ui-icon name="mail" [size]="16"></ui-icon></span>
+            <input class="txt" [class.invalid]="emailError()" id="email" type="email" placeholder="you@example.com" [(ngModel)]="email" name="email" autocomplete="email" (ngModelChange)="clearError()">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <div class="input-icon-wrap">
+            <span class="ico"><ui-icon name="lock" [size]="16"></ui-icon></span>
+            <input class="txt" [class.invalid]="passwordError()" id="password" [type]="showPassword ? 'text' : 'password'" placeholder="••••••••" [(ngModel)]="password" name="password" autocomplete="current-password" (ngModelChange)="clearError()">
+            <button type="button" class="toggle-visibility" (click)="togglePassword()">
+              <ui-icon [name]="showPassword ? 'eyeOff' : 'eye'" [size]="16"></ui-icon>
+            </button>
+          </div>
+        </div>
+
+        @if (errorMessage()) {
+          <div class="auth-error"><ui-icon name="x" [size]="14"></ui-icon> {{ errorMessage() }}</div>
+        }
+
+        <button type="submit" class="btn btn-primary btn-block btn-lg" [disabled]="isLoading()">
+          @if (isLoading()) {
+            <span class="btn-spinner"></span> Signing in…
+          } @else {
+            Sign in <ui-icon name="arrowUpRight" [size]="15"></ui-icon>
+          }
+        </button>
+      </form>
+
+      <div class="auth-divider">or try an instant demo</div>
+      <div class="demo-chips">
+        <button type="button" class="chip" (click)="fillDemo('admin')"><ui-icon name="shield" [size]="13"></ui-icon> Fill Demo Admin</button>
+      </div>
+
+      <p class="auth-switch">New agent or admin account? <a routerLink="/signup">Create an account</a></p>
+    }
+
+    @if (role === 'customer') {
+      @if (customerStep() === 'phone') {
+        <form (ngSubmit)="sendOtp()" novalidate>
+          <div class="field">
+            <label for="phone">Mobile number</label>
+            <div class="input-icon-wrap">
+              <span class="ico"><ui-icon name="phone" [size]="16"></ui-icon></span>
+              <input class="txt" [class.invalid]="phoneError()" id="phone" type="tel" inputmode="numeric" maxlength="10" placeholder="98765 43210" [(ngModel)]="phone" name="phone" autocomplete="tel" (ngModelChange)="clearError()">
+            </div>
+          </div>
+
+          @if (errorMessage()) {
+            <div class="auth-error"><ui-icon name="x" [size]="14"></ui-icon> {{ errorMessage() }}</div>
+          }
+
+          <button type="submit" class="btn btn-primary btn-block btn-lg">
+            Send OTP <ui-icon name="arrowUpRight" [size]="15"></ui-icon>
+          </button>
+          <p class="otp-hint">We'll text a 6-digit code to verify it's you — no password needed.</p>
+        </form>
+      }
+
+      @if (customerStep() === 'otp') {
+        <form (ngSubmit)="verifyOtp()" novalidate>
+          <div class="field">
+            <label>Enter the 6-digit code</label>
+            <div class="otp-box-row" [class.invalid-group]="otpError()">
+              <input #o0 class="otp-box" type="text" inputmode="numeric" maxlength="1" autocomplete="one-time-code"
+                (input)="onOtpDigit($event, 0, o1)" (keydown.backspace)="onOtpKeydown($event, 0)"
+                (paste)="onOtpPaste($event, [o0, o1, o2, o3, o4, o5])">
+              <input #o1 class="otp-box" type="text" inputmode="numeric" maxlength="1"
+                (input)="onOtpDigit($event, 1, o2)" (keydown.backspace)="onOtpKeydown($event, 1, o0)">
+              <input #o2 class="otp-box" type="text" inputmode="numeric" maxlength="1"
+                (input)="onOtpDigit($event, 2, o3)" (keydown.backspace)="onOtpKeydown($event, 2, o1)">
+              <input #o3 class="otp-box" type="text" inputmode="numeric" maxlength="1"
+                (input)="onOtpDigit($event, 3, o4)" (keydown.backspace)="onOtpKeydown($event, 3, o2)">
+              <input #o4 class="otp-box" type="text" inputmode="numeric" maxlength="1"
+                (input)="onOtpDigit($event, 4, o5)" (keydown.backspace)="onOtpKeydown($event, 4, o3)">
+              <input #o5 class="otp-box" type="text" inputmode="numeric" maxlength="1"
+                (input)="onOtpDigit($event, 5)" (keydown.backspace)="onOtpKeydown($event, 5, o4)">
+            </div>
+            <span class="otp-hint">Sent to +91 {{ otpSentTo() }} · <button type="button" class="link-btn" (click)="changeNumber()">Change number</button></span>
+          </div>
+
+          @if (errorMessage()) {
+            <div class="auth-error"><ui-icon name="x" [size]="14"></ui-icon> {{ errorMessage() }}</div>
+          }
+
+          <button type="submit" class="btn btn-primary btn-block btn-lg" [disabled]="isLoading()">
+            @if (isLoading()) {
+              <span class="btn-spinner"></span> Verifying…
+            } @else {
+              Verify &amp; Continue <ui-icon name="arrowUpRight" [size]="15"></ui-icon>
+            }
+          </button>
+          <p class="otp-hint">Didn't get it? <button type="button" class="link-btn" (click)="resendOtp()">Resend OTP</button> · Demo code: <b>123456</b></p>
+        </form>
+      }
+
+      @if (customerStep() === 'name') {
+        <form (ngSubmit)="createCustomerAccount()" novalidate>
+          <div class="field">
+            <label for="newName">You're new here — what's your name?</label>
+            <div class="input-icon-wrap">
+              <span class="ico"><ui-icon name="users" [size]="16"></ui-icon></span>
+              <input class="txt" [class.invalid]="nameError()" id="newName" type="text" placeholder="Your full name" [(ngModel)]="newCustomerName" name="newName" (ngModelChange)="clearError()">
+            </div>
+          </div>
+
+          @if (errorMessage()) {
+            <div class="auth-error"><ui-icon name="x" [size]="14"></ui-icon> {{ errorMessage() }}</div>
+          }
+
+          <button type="submit" class="btn btn-primary btn-block btn-lg" [disabled]="isLoading()">
+            @if (isLoading()) {
+              <span class="btn-spinner"></span> Creating account…
+            } @else {
+              Create Account &amp; Continue <ui-icon name="arrowUpRight" [size]="15"></ui-icon>
+            }
+          </button>
+        </form>
+      }
+    }
+
+    @if (!role) {
+      <p class="auth-switch" style="margin-top:20px;">Pick a role above to continue.</p>
+    }
+  </div>
+</div>

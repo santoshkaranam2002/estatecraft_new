@@ -1,0 +1,103 @@
+<div class="page container">
+  <div class="listing-layout">
+    <aside class="filters">
+      <div class="filters-head">
+        <div class="filters-icon"><ui-icon name="filter" [size]="16"></ui-icon></div>
+        <h3>Refine your search</h3>
+      </div>
+      <div class="field">
+        <div class="input-icon-wrap">
+          <span class="ico"><ui-icon name="search" [size]="15"></ui-icon></span>
+          <input class="txt" type="text" placeholder="Search location or title"
+            [value]="filters().q" (input)="onInputFilter('q', $event)">
+        </div>
+      </div>
+
+      <h4>Category</h4>
+      <select class="txt" [value]="filters().category" (change)="setFilter('category', $any($event.target).value)">
+        <option value="all">All Categories</option>
+        @for (c of categories; track c.value) { <option [value]="c.value">{{ c.label }}</option> }
+      </select>
+
+      <h4>City</h4>
+      <select class="txt" [value]="filters().city" (change)="setFilter('city', $any($event.target).value)">
+        <option value="all">All Cities</option>
+        @for (c of cities(); track c) { <option [value]="c">{{ c }}</option> }
+      </select>
+
+      <h4>Area</h4>
+      <select class="txt" [value]="filters().area" (change)="setFilter('area', $any($event.target).value)">
+        <option value="all">{{ filters().city === 'all' ? 'All Areas' : 'All areas in ' + filters().city }}</option>
+        @for (a of areasForSelectedCity(); track a) { <option [value]="a">{{ a }}</option> }
+      </select>
+
+      <h4>Price Range (₹)</h4>
+      <div style="display:flex; gap:8px;">
+        <input class="txt" type="number" placeholder="Min" [value]="filters().minPrice" (input)="onInputFilter('minPrice', $event)">
+        <input class="txt" type="number" placeholder="Max" [value]="filters().maxPrice" (input)="onInputFilter('maxPrice', $event)">
+      </div>
+
+      <h4>Bedrooms</h4>
+      <div class="chip-group">
+        @for (b of ['any','1','2','3','4']; track b) {
+          <button type="button" class="chip" [class.active]="filters().beds === b" (click)="setFilter('beds', b)">
+            {{ b === 'any' ? 'Any' : (b === '4' ? '4+' : b) }}
+          </button>
+        }
+      </div>
+
+      <h4>Furnishing</h4>
+      <select class="txt" [value]="filters().furnishing" (change)="setFilter('furnishing', $any($event.target).value)">
+        <option value="any">Any</option>
+        @for (f of furnishingOptions; track f) { <option [value]="f">{{ f }}</option> }
+      </select>
+
+      <button class="btn btn-ghost btn-sm btn-block" style="margin-top:18px;" (click)="clearFilters()">
+        <ui-icon name="x" [size]="13"></ui-icon> Clear all filters
+      </button>
+    </aside>
+
+    <div>
+      <div class="listing-top">
+        <div class="result-count"><b>{{ filtered().length }}</b> propert{{ filtered().length === 1 ? 'y' : 'ies' }} found</div>
+        <div class="sort-row">
+          <label class="mono" style="font-size:11.5px; color:var(--ink-faint); text-transform:uppercase;">Sort</label>
+          <select class="txt" style="width:auto;" [value]="filters().sort" (change)="setFilter('sort', $any($event.target).value)">
+            <option value="featured">Featured</option>
+            <option value="priceLow">Price: Low to High</option>
+            <option value="priceHigh">Price: High to Low</option>
+            <option value="areaHigh">Area: Largest</option>
+          </select>
+        </div>
+      </div>
+
+      @if (loading()) {
+        <div class="empty-state">
+          <div class="ico-wrap"><ui-icon name="search" [size]="26"></ui-icon></div>
+          <p>Loading properties…</p>
+        </div>
+      } @else if (loadError()) {
+        <div class="empty-state">
+          <div class="ico-wrap"><ui-icon name="x" [size]="26"></ui-icon></div>
+          <p>Couldn't load properties — is the backend server running?</p>
+          <button class="btn btn-outline btn-sm" style="margin-top:14px;" (click)="getAllProperties()">Retry</button>
+        </div>
+      } @else {
+        <div class="grid-3">
+          @for (p of filtered(); track p.id) {
+            <app-property-card [property]="p" (enquire)="openEnquiry($event)"></app-property-card>
+          } @empty {
+            <div class="empty-state" style="grid-column:1/-1;">
+              <div class="ico-wrap"><ui-icon name="search" [size]="26"></ui-icon></div>
+              <p>No properties match these filters. Try widening your search.</p>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
+@if (enquiryTarget(); as p) {
+  <app-enquiry-modal [property]="p" (closed)="closeEnquiry()"></app-enquiry-modal>
+}
