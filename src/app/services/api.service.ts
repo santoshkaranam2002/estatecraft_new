@@ -7,7 +7,7 @@ import { Observable } from 'rxjs';
 })
 export class ApiService {
 
-  private baseUrl = 'http://127.0.0.1:8000/api';
+private baseUrl = 'http://estatecraft-env.eba-48mmcste.us-east-2.elasticbeanstalk.com/api';
 
   constructor(private http: HttpClient) {}
 
