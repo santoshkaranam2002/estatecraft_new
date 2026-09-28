@@ -334,7 +334,7 @@ textarea.txt{ resize:vertical; min-height:90px; }
 .auth-card{
   width:100%; background: rgba(255,255,255,.98); backdrop-filter: blur(16px);
   border-radius: var(--radius-lg); padding:38px 34px; box-shadow: var(--shadow-lg);
-  border-top:4px solid transparent; border-image: linear-gradient(90deg, var(--sunset), var(--gold)) 1;
+
 }
 .auth-card-head{ margin-bottom:24px; }
 .auth-card-head h2{ font-size:24px; }

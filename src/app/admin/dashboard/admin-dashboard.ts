@@ -52,8 +52,6 @@ export class AdminDashboard implements OnInit {
 
   activeTab = signal<'properties' | 'overview' | 'enquiries' | 'customers'>('properties');
 
-  // Signals: state set inside .subscribe() callbacks needs to be a signal
-  // in this zoneless app, or the page never repaints when data arrives.
   properties = signal<Property[]>([]);
   enquiries = signal<Enquiry[]>([]);
   customers = signal<Customer[]>([]);
@@ -64,7 +62,7 @@ export class AdminDashboard implements OnInit {
   pending = computed(() => this.properties().filter(p => !p.approved));
   approvedProperties = computed(() => this.properties().filter(p => p.approved));
 
-  // Add Property form state.
+  // Add / Edit Property form state
   ownerId = 0;
   categories = CATEGORY_OPTIONS;
   furnishings: Furnishing[] = ['Unfurnished', 'Semi-Furnished', 'Fully-Furnished'];
@@ -72,14 +70,13 @@ export class AdminDashboard implements OnInit {
   showAddModal = signal(false);
   form = signal<NewPropertyForm>(emptyForm());
 
-  // Multi-image upload: every photo the admin has picked (rooms, exterior,
-  // etc.), plus a matching data-URL preview for each so they can see what
-  // they're about to upload and remove any one of them before submitting.
+  // null = adding a new property, number = editing that property
+  editingId = signal<number | null>(null);
+  saving = signal(false);
+
   selectedImageFiles = signal<File[]>([]);
   imagePreviewUrls = signal<string[]>([]);
 
-  // Enquiry status pipeline admin can move a lead through directly —
-  // there's no "assign to agent" step anymore, admin handles it themselves.
   statusPipeline: Enquiry['status'][] = ['New', 'Contacted', 'Interested', 'Visit Scheduled', 'Completed', 'Closed'];
 
   constructor(private api: ApiService, private toast: ToastService, private route: ActivatedRoute) {}
@@ -93,7 +90,7 @@ export class AdminDashboard implements OnInit {
     this.getAllCustomers();
 
     this.route.queryParamMap.subscribe(params => {
-      if (params.get('add')) this.showAddModal.set(true);
+      if (params.get('add')) this.openAdd();
     });
   }
 
@@ -284,14 +281,9 @@ export class AdminDashboard implements OnInit {
     });
   }
 
+  // Fallback thumbnail when a property has no uploaded photo
   imageUrl(seed: string): string {
-    return `https://loremflickr.com/140/100/house?lock=${this.lockFor(seed)}`;
-  }
-
-  private lockFor(seed: string): number {
-    let hash = 0;
-    for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
-    return (hash % 200) + 1;
+    return `https://picsum.photos/seed/${encodeURIComponent(seed || 'house')}/140/100`;
   }
 
   formatPrice(n: number): string {
@@ -299,7 +291,7 @@ export class AdminDashboard implements OnInit {
     return '₹' + n.toLocaleString('en-IN');
   }
 
-  // ───────── Add Property (now the admin's own action, not an agent's) ─────────
+  // ───────── Add / Edit Property ─────────
 
   toggleAmenity(a: string): void {
     this.form.update(f => {
@@ -309,7 +301,34 @@ export class AdminDashboard implements OnInit {
   }
 
   openAdd(): void {
+    this.editingId.set(null);
     this.form.set(emptyForm());
+    this.selectedImageFiles.set([]);
+    this.imagePreviewUrls.set([]);
+    this.showAddModal.set(true);
+  }
+
+  /** Opens the same modal, pre-filled with this property's details. */
+  openEdit(p: Property): void {
+    const x: any = p;
+    this.editingId.set(p.id);
+    this.form.set({
+      title: x.title ?? '',
+      category: x.category ?? 'House',
+      price: x.price ?? null,
+      priceUnit: x.priceUnit ?? '/month',
+      location: x.location ?? '',
+      city: x.city ?? '',
+      area: x.area ?? null,
+      beds: x.beds ?? null,
+      baths: x.baths ?? null,
+      floor: x.floor ?? '',
+      furnishing: x.furnishing ?? 'Unfurnished',
+      description: x.description ?? '',
+      amenities: Array.isArray(x.amenities) ? [...x.amenities] : [],
+      latitude: x.latitude ?? null,
+      longitude: x.longitude ?? null
+    });
     this.selectedImageFiles.set([]);
     this.imagePreviewUrls.set([]);
     this.showAddModal.set(true);
@@ -317,14 +336,11 @@ export class AdminDashboard implements OnInit {
 
   closeAdd(): void {
     this.showAddModal.set(false);
+    this.editingId.set(null);
     this.selectedImageFiles.set([]);
     this.imagePreviewUrls.set([]);
   }
 
-  /** Handles selecting multiple photos at once (rooms, exterior, etc.) —
-   * every valid image file picked gets appended to the running list, with
-   * a live preview generated for each, rather than replacing what was
-   * already selected. */
   onImagesSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const files = input.files ? Array.from(input.files) : [];
@@ -353,11 +369,10 @@ export class AdminDashboard implements OnInit {
     this.imagePreviewUrls.update(list => list.filter((_, i) => i !== index));
   }
 
-  submitProperty(): void {
+  /** Builds the multipart body shared by Add and Edit. */
+  private buildFormData(includeCreateOnly: boolean): FormData {
     const f = this.form();
-    if (!f.title.trim()) { this.toast.error('Please enter a property title.'); return; }
-
-    const fields = {
+    const fields: Record<string, any> = {
       title: f.title.trim(),
       category: f.category,
       price: f.price ?? 0,
@@ -370,39 +385,33 @@ export class AdminDashboard implements OnInit {
       floor: f.floor.trim() || '—',
       furnishing: f.furnishing,
       amenities: f.amenities,
-      ownerId: this.ownerId,
-      // Admin adding a property IS the approval — it goes straight to
-      // customers, no separate review queue needed.
-      approved: true,
       description: f.description.trim() || 'No description provided yet.'
     };
+    if (includeCreateOnly) {
+      fields['ownerId'] = this.ownerId;
+      fields['approved'] = true;
+    }
 
-    // property_create only accepts multipart/form-data — always send
-    // FormData. Every selected photo is appended under the SAME 'images'
-    // key, which is how the backend's request.FILES.getlist('images')
-    // collects them all as one list.
     const formData = new FormData();
     Object.entries(fields).forEach(([key, value]) => {
-      if (key === 'amenities') {
-        formData.append(key, JSON.stringify(value));
-      } else {
-        formData.append(key, String(value));
-      }
+      formData.append(key, key === 'amenities' ? JSON.stringify(value) : String(value));
     });
-    // Optional GPS pin — only sent if the admin actually filled it in.
-    // An empty string would fail backend validation (a float field can't
-    // parse ""), so we simply omit the key entirely when left blank.
     if (f.latitude !== null) formData.append('latitude', String(f.latitude));
     if (f.longitude !== null) formData.append('longitude', String(f.longitude));
     this.selectedImageFiles().forEach(file => formData.append('images', file));
+    return formData;
+  }
 
-    this.api.addProperty(formData).pipe(timeout(15000)).subscribe({
+  submitProperty(): void {
+    if (!this.form().title.trim()) { this.toast.error('Please enter a property title.'); return; }
+
+    this.saving.set(true);
+    this.api.addProperty(this.buildFormData(true)).pipe(timeout(30000)).subscribe({
       next: (res: any) => {
+        this.saving.set(false);
         if (res?.Status === 200 && res?.Result && typeof res.Result === 'object') {
           this.properties.update(list => [...list, res.Result]);
-          this.showAddModal.set(false);
-          this.selectedImageFiles.set([]);
-          this.imagePreviewUrls.set([]);
+          this.closeAdd();
           this.toast.success('Property added and published.');
         } else {
           console.error('Add Property Error:', res?.Result);
@@ -410,8 +419,35 @@ export class AdminDashboard implements OnInit {
         }
       },
       error: (err: any) => {
+        this.saving.set(false);
         console.error('Add Property Error:', err);
         this.toast.error('Could not add the property. Please try again.');
+      }
+    });
+  }
+
+  saveEdit(): void {
+    const id = this.editingId();
+    if (id === null) return;
+    if (!this.form().title.trim()) { this.toast.error('Please enter a property title.'); return; }
+
+    this.saving.set(true);
+    this.api.updateProperty(id, this.buildFormData(false)).pipe(timeout(30000)).subscribe({
+      next: (res: any) => {
+        this.saving.set(false);
+        if (res?.Status === 200 && res?.Result && typeof res.Result === 'object') {
+          this.properties.update(list => list.map(p => p.id === id ? res.Result : p));
+          this.closeAdd();
+          this.toast.success('Property updated.');
+        } else {
+          console.error('Update Property Error:', res?.Result);
+          this.toast.error('Could not update the property. Please try again.');
+        }
+      },
+      error: (err: any) => {
+        this.saving.set(false);
+        console.error('Update Property Error:', err);
+        this.toast.error('Could not update the property. Please try again.');
       }
     });
   }

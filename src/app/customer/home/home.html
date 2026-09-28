@@ -12,9 +12,9 @@
       </div>
     </div>
     <div class="hero-visual">
-      <img class="big" src="https://loremflickr.com/700/900/house?lock=42" alt="">
-      <img src="https://loremflickr.com/500/420/apartment?lock=17" alt="">
-      <img src="https://loremflickr.com/500/420/interior?lock=88" alt="">
+      <img class="big" src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=700&h=900&fit=crop&auto=format&q=80" alt="House">
+      <img src="https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=500&h=420&fit=crop&auto=format&q=80" alt="Apartment">
+      <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=500&h=420&fit=crop&auto=format&q=80" alt="Interior">
     </div>
   </div>
   <div class="container">
@@ -120,44 +120,42 @@
     </div>
   </div>
 } @else {
-
-<div class="container" style="margin-top:10px;">
-  <div class="section-head">
-    <div>
-      <div class="eyebrow">Featured this week</div>
-      <h2 style="margin-top:8px;">Handpicked listings</h2>
-    </div>
-    <a class="btn btn-outline btn-sm" routerLink="/app/listings">View all listings <ui-icon name="arrowUpRight" [size]="14"></ui-icon></a>
-  </div>
-  <div class="grid-3">
-    @for (p of featured(); track p.id) {
-      <app-property-card [property]="p" (enquire)="openEnquiry($event)"></app-property-card>
-    } @empty {
-      <div class="empty-state" style="grid-column:1/-1;">
-        <p>No featured properties yet.</p>
+  <div class="container" style="margin-top:10px;">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Featured this week</div>
+        <h2 style="margin-top:8px;">Handpicked listings</h2>
       </div>
-    }
-  </div>
-</div>
-
-<div class="container" style="margin-top:64px;">
-  <div class="section-head">
-    <div>
-      <div class="eyebrow">Just listed</div>
-      <h2 style="margin-top:8px;">Recently added to the platform</h2>
+      <a class="btn btn-outline btn-sm" routerLink="/app/listings">View all listings <ui-icon name="arrowUpRight" [size]="14"></ui-icon></a>
+    </div>
+    <div class="grid-3">
+      @for (p of featured(); track p.id) {
+        <app-property-card [property]="p" (enquire)="openEnquiry($event)"></app-property-card>
+      } @empty {
+        <div class="empty-state" style="grid-column:1/-1;">
+          <p>No featured properties yet.</p>
+        </div>
+      }
     </div>
   </div>
-  <div class="grid-4">
-    @for (p of recent(); track p.id) {
-      <app-property-card [property]="p" [compact]="true" (enquire)="openEnquiry($event)"></app-property-card>
-    } @empty {
-      <div class="empty-state" style="grid-column:1/-1;">
-        <p>No properties listed yet.</p>
-      </div>
-    }
-  </div>
-</div>
 
+  <div class="container" style="margin-top:64px;">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Just listed</div>
+        <h2 style="margin-top:8px;">Recently added to the platform</h2>
+      </div>
+    </div>
+    <div class="grid-4">
+      @for (p of recent(); track p.id) {
+        <app-property-card [property]="p" [compact]="true" (enquire)="openEnquiry($event)"></app-property-card>
+      } @empty {
+        <div class="empty-state" style="grid-column:1/-1;">
+          <p>No properties listed yet.</p>
+        </div>
+      }
+    </div>
+  </div>
 }
 
 @if (enquiryTarget(); as p) {

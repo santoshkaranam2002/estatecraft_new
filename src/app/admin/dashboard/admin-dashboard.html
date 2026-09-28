@@ -64,6 +64,7 @@
                       @if (!p.approved) {
                         <button class="icon-btn" title="Approve" (click)="approve(p.id)"><ui-icon name="check" [size]="14"></ui-icon></button>
                       }
+                      <button class="icon-btn" title="Edit property" (click)="openEdit(p)"><ui-icon name="edit" [size]="14"></ui-icon></button>
                       <button class="icon-btn" title="Remove property" (click)="deletePropertyAsAdmin(p)"><ui-icon name="trash" [size]="14"></ui-icon></button>
                     </div>
                   </td>
@@ -167,14 +168,16 @@
   <div class="modal-overlay" (click)="closeAdd()">
     <div class="modal" (click)="$event.stopPropagation()">
       <button class="modal-close" (click)="closeAdd()"><ui-icon name="x" [size]="15"></ui-icon></button>
-      <div class="eyebrow">New Listing</div>
-      <h2 style="margin-top:8px; font-size:22px;">Add a rental property</h2>
-      <p style="color:var(--ink-faint); font-size:13px; margin-top:4px;">This goes straight to customers — no separate approval step needed.</p>
+      <div class="eyebrow">{{ editingId() ? 'Edit Listing' : 'New Listing' }}</div>
+      <h2 style="margin-top:8px; font-size:22px;">{{ editingId() ? 'Edit property' : 'Add a rental property' }}</h2>
+      <p style="color:var(--ink-faint); font-size:13px; margin-top:4px;">
+        {{ editingId() ? 'Update the details below. New photos are added to the existing ones.' : 'This goes straight to customers — no separate approval step needed.' }}
+      </p>
 
       <div class="form-grid">
         <div class="field full">
           <label>Property Photos</label>
-          <input class="txt" type="file" accept="image/*" multiple (change)="onImagesSelected($event)">
+          <input class="file-input" type="file" accept="image/*" multiple (change)="onImagesSelected($event)">
           <span style="font-size:12px; color:var(--ink-faint); margin-top:4px; display:block;">Upload as many as you like — rooms, exterior, everything. A generated placeholder is used if you skip this.</span>
           @if (imagePreviewUrls().length) {
             <div class="image-preview-grid">
@@ -208,16 +211,6 @@
         <div class="field">
           <label>Area / Locality</label>
           <input class="txt" placeholder="e.g. MVP Colony" [(ngModel)]="form().location" name="location">
-        </div>
-        <div class="field full">
-          <label>GPS Location <span style="text-transform:none; font-weight:500; color:var(--ink-faint);">(optional, for exact map pin)</span></label>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-            <input class="txt" type="number" step="any" placeholder="Latitude, e.g. 17.7231" [(ngModel)]="form().latitude" name="latitude">
-            <input class="txt" type="number" step="any" placeholder="Longitude, e.g. 83.3013" [(ngModel)]="form().longitude" name="longitude">
-          </div>
-          <span style="font-size:12px; color:var(--ink-faint); margin-top:6px; display:block;">
-            To find these: open <a href="https://www.google.com/maps" target="_blank" style="color:var(--sunset); font-weight:600;">Google Maps</a>, right-click the exact spot, and click the coordinates shown at the top of the menu to copy them — then paste the two numbers here. If you skip this, the property still works, but "View on Google Maps" will search by area/city instead of pointing at the exact building.
-          </span>
         </div>
         <div class="field">
           <label>Bedrooms</label>
@@ -258,7 +251,9 @@
         </div>
       </div>
 
-      <button class="btn btn-primary btn-block" style="margin-top:20px;" (click)="submitProperty()">Publish Property</button>
+      <button class="btn btn-primary btn-block" style="margin-top:20px;" [disabled]="saving()" (click)="editingId() ? saveEdit() : submitProperty()">
+        {{ saving() ? 'Saving…' : (editingId() ? 'Save Changes' : 'Publish Property') }}
+      </button>
     </div>
   </div>
 }

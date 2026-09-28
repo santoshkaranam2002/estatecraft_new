@@ -19,11 +19,11 @@
         @for (c of categories; track c.value) { <option [value]="c.value">{{ c.label }}</option> }
       </select>
 
-      <h4>City</h4>
+      <!-- <h4>City</h4>
       <select class="txt" [value]="filters().city" (change)="setFilter('city', $any($event.target).value)">
         <option value="all">All Cities</option>
         @for (c of cities(); track c) { <option [value]="c">{{ c }}</option> }
-      </select>
+      </select> -->
 
       <h4>Area</h4>
       <select class="txt" [value]="filters().area" (change)="setFilter('area', $any($event.target).value)">
